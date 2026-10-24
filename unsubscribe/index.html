@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- zerobatics.com/unsubscribe/?t=<token> — the unsubscribe link in every
+     TrueCourse marketing email (G6d, migration 0062; PECR reg 23(b): "a valid
+     address to which the recipient ... may send a request that such
+     communications cease"). Written by hand; published by tools/publish_site.sh.
+
+     WHY A BUTTON AND NOT A LINK THAT WORKS ON OPENING: some mail systems open
+     every link in an email to check it for danger. A link that unsubscribed on
+     opening could be set off by one of those without the person ever seeing
+     it (a judgement, not a rule read anywhere). One press is still one step.
+
+     WHAT IT SENDS: only the token from the link, to public.unsubscribe_marketing
+     on TrueCourse's server. The key below is the PUBLISHABLE key, the same one
+     inside the app; it lets the page call only what anyone signed out may call.
+     No sign-in, no cookie, nothing stored in the browser. -->
+<title>Unsubscribe</title><style>:root{--bg:#f7f6f2;--fg:#1b1d21;--muted:#55595f;--rule:#d9d6cc;--accent:#9a5b00;--warn-bg:#fff4dd;--warn:#7a4a00}
+@media (prefers-color-scheme: dark){:root{--bg:#0e0f11;--fg:#e9e7e1;--muted:#a3a6ab;--rule:#2a2c30;--accent:#f0a830;--warn-bg:#2a2110;--warn:#f0c070}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:17px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+main{max-width:44rem;margin:0 auto;padding:1.5rem 1rem 4rem}a{color:var(--accent)}
+h1{font-size:1.8rem;line-height:1.2}
+button{font:inherit;font-weight:600;padding:.7rem 1.4rem;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--bg);cursor:pointer}
+button[disabled]{opacity:.5;cursor:default}
+.note{background:var(--warn-bg);color:var(--warn);padding:.75rem 1rem;border-radius:6px}
+footer{color:var(--muted);font-size:.9rem;margin-top:3rem}</style></head>
+<body><main><h1>Stop TrueCourse marketing emails</h1>
+<div id="ask">
+<p>Press the button to stop marketing emails from TrueCourse. Nothing else about your account changes. Emails about your account and your bookings will still arrive.</p>
+<p><button id="go" type="button">Unsubscribe</button></p>
+</div>
+<p id="said" role="status" aria-live="polite"></p>
+<p>You can also turn marketing emails on or off at any time in the TrueCourse app, under Profile, Settings, Email.</p>
+<p>Questions: <a href="mailto:support@zerobatics.com">support@zerobatics.com</a>.</p>
+<footer>Zerobatics Ltd, company number 15501115.</footer>
+</main>
+<script>
+(function () {
+  var URL_ = "https://bvwbkcpxqlnewjwrrfbl.supabase.co/rest/v1/rpc/unsubscribe_marketing";
+  var KEY = "sb_publishable_hrq7UhENXOowG8aayIXILQ_gbLnoMAF";
+  var token = new URLSearchParams(location.search).get("t") || "";
+  var go = document.getElementById("go"), said = document.getElementById("said"), ask = document.getElementById("ask");
+  function say(text, isNote) { said.textContent = text; said.className = isNote ? "note" : ""; }
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(token)) {
+    go.disabled = true;
+    say("This link is not complete. Please use the link from the email itself, or turn marketing emails off in the app.", true);
+    return;
+  }
+  go.addEventListener("click", function () {
+    go.disabled = true;
+    say("Unsubscribing…");
+    fetch(URL_, {
+      method: "POST",
+      headers: { "apikey": KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ token: token })
+    }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function (answer) {
+        if (answer === "unsubscribed" || answer === "already_off") {
+          ask.hidden = true;
+          say(answer === "unsubscribed"
+            ? "Done. We won't send you any more marketing emails."
+            : "You were already unsubscribed. We won't send you marketing emails.");
+        } else {
+          go.disabled = false;
+          say("We couldn't find this link. Please turn marketing emails off in the app, or email support@zerobatics.com and we will do it for you.", true);
+        }
+      })
+      .catch(function () {
+        go.disabled = false;
+        say("That didn't work just now. Please try again, or turn marketing emails off in the app.", true);
+      });
+  });
+})();
+</script>
+</body></html>
